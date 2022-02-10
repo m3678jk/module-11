@@ -2,65 +2,88 @@ package TaskOne;
 
 import java.util.Scanner;
 
-public class TimeCounter extends Thread {
+public class TimeCounter {
     private volatile boolean running = false;
     private volatile boolean isAlive = true;
-    private volatile int count = 0 ;
+    private volatile int count = 0;
+
     public void setRunning(boolean running) {
         this.running = running;
     }
 
-    public synchronized void countTime(){
-        count ++;
+    public boolean getRunning() {
+        return running;
     }
 
-    public synchronized void print(){
-        if (count % 5==0){
-            System.out.println("5 sec is left");
-        } else {
-            System.out.println("Time from start - "+ count + " sec.");
-        }
+    public void setAlive(boolean isAlive) {
+        this.isAlive = isAlive;
     }
-    public  void isFiveSec(){
-        new Thread(() ->{
-           if (count%5 ==0) {
-               print();
-           }
-            try {
-                Thread.sleep(5000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }).start();
-    }
-    @Override
-    public void run() {
-        while (isAlive) {
-            if (running) {
-                countTime();
-                print();
 
-            }
-// it works always
-            try {
-                Thread.sleep(1000L);
-                if (count%5==0){
-                    isFiveSec();
+    public boolean isIsAlive() {
+        return isAlive;
+    }
+
+    public void setCount(int count) {
+        this.count = count;
+    }
+
+    public int getCount() {
+        return count;
+    }
+
+    public void countTime() {
+        setCount(count + 1);
+    }
+
+    Thread threadOne = new Thread(new Runnable() {
+        public void run() {
+            while (isIsAlive()) {
+                if (getRunning()) {
+                    countTime();
+                    if (getCount() % 5 != 0) {
+                        System.out.println("Time from start - " + getCount() + " sec.");
+                    }
+
                 }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+
+                try {
+                    Thread.sleep(1000L);
+
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    });
+
+    Thread threadTwo = new Thread(new Runnable() {
+        @Override
+        public void run() {
+            while (isIsAlive()) {
+                if (getRunning()) {
+                    if (getCount() % 5 == 0) {
+                        System.out.println("5 sec left");
+
+                    }
+                }
+
+                try {
+                    Thread.sleep(5000L);
+
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         }
 
+    });
 
 
-    }
-
-    public void startProgram(){
+    public void startProgram() {
         System.out.println("Enter commands:\nto start - \"s\"\nto finish - \"f\"\nto exit - \"e\"\nto pause - \"p\"\nto restart - \"r\"");
 
         Scanner scanner = new Scanner(System.in);
-        while(true) {
+        while (true) {
             String command = scanner.nextLine();
 
             switch (command) {
@@ -73,7 +96,10 @@ public class TimeCounter extends Thread {
                 case "s":
                     System.out.println("Start");
                     setRunning(true);
-                    start();
+                    threadOne.start();
+                    threadTwo.start();
+
+
                     break;
                 case "r":
                     System.out.println("Restart");
@@ -84,18 +110,18 @@ public class TimeCounter extends Thread {
                     System.out.println("paused");
                     setRunning(false);
                     break;
-                    //stop
+                //stop
                 case "f":
                     System.out.println("stopped");
-                    stopThread();
+                    stopThreads();
                     break;
 
             }
         }
     }
 
-    private void stopThread() {
-        isAlive = false;
+    private void stopThreads() {
+        setAlive(false);
     }
 
 }
