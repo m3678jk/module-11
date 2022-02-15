@@ -5,7 +5,28 @@ import java.util.Scanner;
 public class TimeCounter {
     private volatile boolean running = false;
     private volatile boolean isAlive = true;
+    private volatile boolean switchT = true;
+
+
     private volatile int count = 0;
+
+    private volatile int time;
+
+    public void setTime(int time) {
+        this.time = time;
+    }
+
+    public int getTime() {
+        return time;
+    }
+
+    public void setSwitchT(boolean switchT) {
+        this.switchT = switchT;
+    }
+
+    public boolean isSwitchT() {
+        return switchT;
+    }
 
     public void setRunning(boolean running) {
         this.running = running;
@@ -40,20 +61,19 @@ public class TimeCounter {
             while (isIsAlive()) {
                 if (getRunning()) {
                     countTime();
-                    if (getCount() % 5 != 0) {
-                        System.out.println("Time from start - " + getCount() + " sec.");
+                    try {
+                        Thread.sleep(1000L);
+
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
                     }
+                    methodForThreadOne(getCount());
+                    System.out.println("from start left: " + getTime() + " sec.");
 
-                }
-
-                try {
-                    Thread.sleep(1000L);
-
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
                 }
             }
         }
+
     });
 
     Thread threadTwo = new Thread(new Runnable() {
@@ -61,10 +81,8 @@ public class TimeCounter {
         public void run() {
             while (isIsAlive()) {
                 if (getRunning()) {
-                    if (getCount() % 5 == 0) {
-                        System.out.println("5 sec left");
-
-                    }
+                    methodForThreadTwo();
+                    System.out.println("5 sec left");
                 }
 
                 try {
@@ -78,6 +96,42 @@ public class TimeCounter {
 
     });
 
+    synchronized void setChangeTh(int time) {
+        while (!isSwitchT()) {
+            try {
+                wait();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+        }
+    }
+
+
+    synchronized void methodForThreadOne(int s) {
+        while (!isSwitchT()) {
+            try {
+                wait();
+            } catch (InterruptedException e) {
+            }
+        }
+        setTime(s);
+        if (s % 5 == 0)
+            setSwitchT(false);
+        notify();
+    }
+
+    synchronized int methodForThreadTwo() {
+        while (isSwitchT()) {
+            try {
+                wait();
+            } catch (InterruptedException e) {
+            }
+        }
+        setSwitchT(true);
+        notify();
+        return getTime();
+    }
 
     public void startProgram() {
         System.out.println("Enter commands:\nto start - \"s\"\nto finish - \"f\"\nto exit - \"e\"\nto pause - \"p\"\nto restart - \"r\"");
